@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2048
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VA.HidInterface", "VA.HidInterface\VA.HidInterface.csproj", "{844B5B9A-A54A-49D2-9508-E0CD88D4B9DD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{844B5B9A-A54A-49D2-9508-E0CD88D4B9DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{844B5B9A-A54A-49D2-9508-E0CD88D4B9DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{844B5B9A-A54A-49D2-9508-E0CD88D4B9DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{844B5B9A-A54A-49D2-9508-E0CD88D4B9DD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4C37DDE4-0221-4317-B288-478D75A22249}
+	EndGlobalSection
+EndGlobal
