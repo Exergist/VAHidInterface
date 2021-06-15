@@ -5,15 +5,15 @@
 
 
 // TODO
+// disposition ///, /*, debug, etc.
 // change required version to 1.8.8 when ready
+// go through "blue" yellow red purple text colors
 // compare and update Ex.HidInterface Code vs the HostInterface code here
-// possibly add better error logging
-// possibly transition all single quotes highlighting stuff to double-quotes
-
 
 using IniParser;
 using IniParser.Model;
 using System;
+using System.IO;
 
 namespace VA.HidInterface
 {
@@ -24,7 +24,7 @@ namespace VA.HidInterface
         private static bool vaVersionCompatible = false;
         private static dynamic VA;
         private static HostInterface hostInterface;
-        private static readonly string hidConfigFileName = "HIDConfig.ini";
+        private static string pluginDirectoryPath;
         private static string hidConfigFilePath;
         private static readonly Version requiredVaVersion = new Version(1, 8, 7); /// update this for new 1.8.8 version!
 
@@ -54,7 +54,7 @@ namespace VA.HidInterface
         // What VoiceAttack will display when referring to the plugin
         public static string VA_DisplayName()
         {
-            return "VAHidInterface - a0.1.0";
+            return "VAHidInterface";
         }
 
         // Display extra information about the VoiceAttack plugin
@@ -70,7 +70,8 @@ namespace VA.HidInterface
             if (vaProxy.VAVersion >= requiredVaVersion)
             {
                 vaVersionCompatible = true;
-                hidConfigFilePath = System.IO.Path.Combine(System.IO.Directory.GetParent(vaProxy.PluginPath()).FullName, hidConfigFileName);
+                pluginDirectoryPath = Directory.GetParent(vaProxy.PluginPath()).FullName;
+                hidConfigFilePath = Path.Combine(pluginDirectoryPath, "HIDConfig.ini");
 
                 try // Attempt the following code...
                 {
@@ -97,23 +98,9 @@ namespace VA.HidInterface
                 }
                 catch (Exception ex) // Handle exceptions encountered in above code
                 {
-                    OutputToLog("Error initializing stored HID hardware configuration. " + ex.Message, "red"); // Output info to event log
+                    string message = "Error initializing stored HID hardware configuration"; // Store error message
+                    LogError(ex, message); // Output info to event log and write error info to file
                 }
-
-                // Enable this section (and remove above try-catch block) to hard code the target HidDevice info and create the interface connection upon plugin initialization
-                /* // Target HID hardware information (with identifying info as hexadecimal strings)
-                string deviceName = "bigKNOBv2";
-                string vendorID = "0xCEEB";
-                string productID = "0x0007";
-                string usagePage = "0xFF60";
-                string usage = "0x61";
-
-                // Create new HostInterface instance and pass it target HID hardware's information
-                // It is strongly recommended that all the below information be provided (your mileage may vary)
-                hostInterface = new HostInterface(deviceName, vendorID, productID, usagePage, usage);
-
-                // Connect with target HID hardware and engage automatic 'listening' for HID hardware data messages
-                hostInterface.Connect(true, hidConfigFilePath); */
             }
             else
                 OutputToLog(VA_DisplayName() + " requires VoiceAttack v" + requiredVaVersion.ToString() + " or later, but v" + vaProxy.VAVersion.ToString() + " is currently installed", "red");
@@ -148,7 +135,6 @@ namespace VA.HidInterface
                 OutputToLog("'" + context[0].ToLower() + "' is invalid VAHidInterface action", "red");
                 return;
             }
-            ///OutputToLog(action.ToString().ToLower(), "purple"); // debug
             if (hostInterface == null && hidInterfaceAction != HidInterfaceAction.Initialize)
             {
                 if (hidInterfaceAction == HidInterfaceAction.Check)
@@ -244,7 +230,7 @@ namespace VA.HidInterface
                                 if (Int32.TryParse(context[2], out int hidActionContext) == true)
                                 {
                                     if (hostInterface.Send((int)hidAction, hidActionContext) == false)
-                                        OutputToLog("Could not perform VAHidInterface '" + hidInterfaceAction.ToString().ToLower() + "' action", "red");
+                                        OutputToLog("Could not send data to " + hostInterface.DeviceName, "red");
                                 }
                                 else
                                     OutputToLog("'" + context[2] + "' is invalid context for HidAction '" + hidAction + "'", "red");
@@ -270,7 +256,46 @@ namespace VA.HidInterface
         // Method for outputting info to event log
         public static void OutputToLog(string message, string color = "blank")
         {
-            VA.WriteToLog(message, color);
+            VA.WriteToLog(message + " [(VAHidInterface)]", color);
+        }
+
+        // Method for logging details about encountered exceptions
+        public static void LogError(Exception ex, string eventLogMessage)
+        {
+            try
+            {
+                OutputToLog(eventLogMessage + " (see VAHidInterfaceError.txt)", "red");
+
+                string errorFilePath = Path.Combine(pluginDirectoryPath, "VAHidInterfaceError.txt");
+                string message = null;
+                if (File.Exists(errorFilePath) == true)
+                    message += Environment.NewLine;
+                message += string.Format("Time: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss tt"));
+                message += Environment.NewLine;
+                message += "-----------------------------------------------------------";
+                message += Environment.NewLine;
+                message += string.Format("VoiceAttack Event Log: {0}", eventLogMessage);
+                message += Environment.NewLine;
+                message += string.Format("Message: {0}", ex.Message.ToString());
+                message += Environment.NewLine;
+                message += string.Format("Message Type: {0}", ex.GetType().ToString());
+                message += Environment.NewLine;
+                message += string.Format("StackTrace: {0}", ex.StackTrace.ToString());
+                message += Environment.NewLine;
+                ///message += string.Format("Error Line Number: {0}", ex.StackTrace.Substring(ex.StackTrace.Length - (ex.StackTrace.Length - ex.StackTrace.IndexOf("cs:line ") - "cs:line ".Length)));
+                ///message += Environment.NewLine;
+                message += "-----------------------------------------------------------";
+
+                using (StreamWriter writer = new StreamWriter(errorFilePath, true))
+                {
+                    writer.WriteLine(message);
+                    writer.Close();
+                }
+            }
+            catch (Exception logEx)
+            {
+                OutputToLog("Error logging fault: " + logEx.Message, "red");
+            }
         }
 
         #endregion

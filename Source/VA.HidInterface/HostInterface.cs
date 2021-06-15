@@ -1,7 +1,4 @@
-﻿// disposition ///, /*, debug, etc.
-// go through "blue" yellow red purple text colors
-
-using HidLibrary;
+﻿using HidLibrary;
 using IniParser;
 using IniParser.Model;
 using System;
@@ -103,6 +100,8 @@ namespace VA.HidInterface
         // Method for connecting with a HidDevice 
         public void Connect(bool hidDeviceListeningEnabled = true, string hidConfigFilePath = null)
         {
+            #region Establish interface betweeen VoiceAttack and HID hardware
+
             try // Attempt the following code...
             {
                 if (_usagePage == -1 || _usage == -1) // Check if usagePage OR usage were not provided when HostInterface was instantiated
@@ -110,7 +109,6 @@ namespace VA.HidInterface
                 else
                 {
                     var devices = HidDevices.Enumerate(_vendorID, _productID, _usagePage); // Capture all HidDevices
-                    ///throw new Exception("test"); // (debug)
                     foreach (HidDevice dev in devices) // Loop through each HidDevice
                     {
                         if (dev.Capabilities.Usage == _usage) // Check if current HidDevice matches target device's usage
@@ -122,7 +120,6 @@ namespace VA.HidInterface
                 }
                 if (kbDevice != null) // Check if target HidDevice was found
                 {
-                    ///VoiceAttackPlugin.OutputToLog(this.DeviceName + " found!", "purple"); // Output info to event log (debug)
                     kbDevice.OpenDevice(); // Open connection between HostInterface (computer) and HidDevice
                     this.IsActive = true; // Set flag indicating interface between HostInterface (computer) and HidDevice is active
                     this.IsListening = hidDeviceListeningEnabled; // Transfer passed-in listening state (and activate listening for HidDevice data messages if applicable)
@@ -135,9 +132,14 @@ namespace VA.HidInterface
             }
             catch (Exception ex) // Handle exceptions encountered in above code
             {
-                VoiceAttackPlugin.OutputToLog("Error connecting to " + this.DeviceName + ". " + ex.Message, "red"); // Output info to event log
-                return;
+                string message = "Error connecting to " + this.DeviceName; // Store error message
+                VoiceAttackPlugin.LogError(ex, message); // Output info to event log and write error info to file
             }
+
+            #endregion
+
+            #region Write HID hardware configuration to ini file
+
             try // Attempt the following code...
             {
                 if (kbDevice != null && hidConfigFilePath != null)  // Check if target HidDevice was found AND a file path was passed into method
@@ -157,8 +159,11 @@ namespace VA.HidInterface
             }
             catch (Exception ex) // Handle exceptions encountered in above code
             {
-                VoiceAttackPlugin.OutputToLog("Error writing " + this.DeviceName + " configuration to file. " + ex.Message, "red"); // Output info to event log
+                string message = "Error writing " + this.DeviceName + " configuration to file"; // Store error message
+                VoiceAttackPlugin.LogError(ex, message); // Output info to event log and write error info to file
             }
+
+            #endregion
         }
 
         // Method for checking HidDevice connection with HostInterface (computer) and reconnecting if applicable
@@ -186,17 +191,15 @@ namespace VA.HidInterface
             }
             catch (Exception ex) // Handle exceptions encountered in above code
             {
-                VoiceAttackPlugin.OutputToLog("Error checking connection with " + this.DeviceName + ". " + ex.Message, "red"); // Output info to event log
+                string message = "Error checking connection with " + this.DeviceName; // Store error message
+                VoiceAttackPlugin.LogError(ex, message); // Output info to event log and write error info to file
             }
-            /// if (result == true) // Check if result is true (debug)
-                /// VoiceAttackPlugin.OutputToLog(this.DeviceName + " is connected", "purple"); // Output info to event log (debug)
             return result;
         }
 
         // Method for sending data to a HidDevice
         public bool Send(int action, int? context = null, bool retry = false)
         {
-            ///throw new Exception("test"); // (debug)
             bool result = false; // Initialize variable for storing processing result
             try // Attempt the following code...
             {
@@ -214,7 +217,6 @@ namespace VA.HidInterface
                     OutData[2] = (byte)context; // Context for desired HidAction
 
                 // Send OutData to HidDevice
-                /// VoiceAttackPlugin.OutputToLog("Sending data to " + this.DeviceName, "purple"); // Output info to event log (debug)
                 if (kbDevice.Write(OutData) == false) // Send OutData to HidDevice and check if process was NOT successful
                     VoiceAttackPlugin.OutputToLog("Could not send data to " + this.DeviceName, "red"); // Output info to event log
                 else
@@ -222,7 +224,8 @@ namespace VA.HidInterface
             }
             catch (Exception ex) // Handle exceptions encountered in above code
             {
-                VoiceAttackPlugin.OutputToLog("Error sending data to " + this.DeviceName + ". " + ex.Message, "red"); // Output info to event log
+                string message = "Error sending data to " + this.DeviceName; // Store error message
+                VoiceAttackPlugin.LogError(ex, message); // Output info to event log and write error info to file
             }
             return result; // Return result from this method
         }
@@ -230,7 +233,6 @@ namespace VA.HidInterface
         // Method for (manually) receiving data from a HidDevice
         public bool Receive(bool retry = false)
         {
-            ///throw new Exception("test"); // (debug)
             bool result = false; // Initialize variable for storing processing result
             try // Attempt the following code...
             {
@@ -260,7 +262,8 @@ namespace VA.HidInterface
             }
             catch (Exception ex) // Handle exceptions encountered in above code
             {
-                VoiceAttackPlugin.OutputToLog("Error receiving data from " + this.DeviceName + ". " + ex.Message, "red"); // Output info to event log
+                string message = "Error receiving data from " + this.DeviceName; // Store error message
+                VoiceAttackPlugin.LogError(ex, message); // Output info to event log and write error info to file
             }
             return result; // Return result from this method
         }
@@ -285,7 +288,8 @@ namespace VA.HidInterface
             }
             catch (Exception ex) // Handle exceptions encountered in above code
             {
-                VoiceAttackPlugin.OutputToLog("Error closing interface between VoiceAttack and " + this.DeviceName + ". " + ex.Message, "red"); // Output info to event log
+                string message = "Error closing interface between VoiceAttack and " + this.DeviceName; // Store error message
+                VoiceAttackPlugin.LogError(ex, message); // Output info to event log and write error info to file
             }
         }
 
@@ -310,22 +314,30 @@ namespace VA.HidInterface
         // Method run when HidDevice sends data to the (connected and listening) HostInterface (computer)
         private void OnReport(HidReport report)
         {
-            if (this.IsConnected == false || this.IsListening == false) // Check if HostInterface (computer) is NOT connected to HidDevice OR is NOT listening for HidDevice messages 
-                return; // Return from this method
-
-            // *Do stuff with data received from HidDevice*
-
-            // Here is an example for debugging
-            /* if (report.Data.Length >= 4) // Check if length of received data is greater than or equal to 4 elements (change as needed)
+            try // Attempt the following code...
             {
-                int[] data = Array.ConvertAll(report.Data, c => (int)c); // Convert received byte data to integer array
-                string[] convertedData = new string[data.Length]; // Initialize string array
-                for (int i = 0; i < data.Length; i++) // Loop through each data element
-                    convertedData[i] = Convert.ToChar(data[i]).ToString(); // Convert current data element to equivalent string element
-                VoiceAttackPlugin.OutputToLog(string.Join("", convertedData), "purple"); // Output info to event log (debug)
-            } */
+                if (this.IsConnected == false || this.IsListening == false) // Check if HostInterface (computer) is NOT connected to HidDevice OR is NOT listening for HidDevice messages 
+                    return; // Return from this method
 
-            kbDevice.ReadReport(OnReport); // Subscribe to OnReport (as callback) for next received message from HidDevice
+                // *Do stuff with data received from HidDevice*
+
+                // Here is an example for debugging
+                /* if (report.Data.Length >= 4) // Check if length of received data is greater than or equal to 4 elements (change as needed)
+                {
+                    int[] data = Array.ConvertAll(report.Data, c => (int)c); // Convert received byte data to integer array
+                    string[] convertedData = new string[data.Length]; // Initialize string array
+                    for (int i = 0; i < data.Length; i++) // Loop through each data element
+                        convertedData[i] = Convert.ToChar(data[i]).ToString(); // Convert current data element to equivalent string element
+                    VoiceAttackPlugin.OutputToLog(string.Join("", convertedData), "purple"); // Output info to event log (debug)
+                } */
+
+                kbDevice.ReadReport(OnReport); // Subscribe to OnReport (as callback) for next received message from HidDevice
+            }
+            catch (Exception ex) // Handle exceptions encountered in above code
+            {
+                string message = "Error receiving data from " + this.DeviceName; // Store error message
+                VoiceAttackPlugin.LogError(ex, message); // Output info to event log and write error info to file
+            }
         }
 
         #endregion
@@ -336,10 +348,19 @@ namespace VA.HidInterface
         private static int ConvertHexStringToInt(string hexString)
         {
             int intValue;
-            if (hexString.StartsWith("0x") == true) // Handle case where hex string is prefixed with "0x" (e.g., 0x61)
-                intValue = Convert.ToInt32(hexString, 16);
-            else
-                intValue = int.Parse(hexString, System.Globalization.NumberStyles.HexNumber);
+            try // Attempt the following code...
+            {
+                if (hexString.StartsWith("0x") == true) // Handle case where hex string is prefixed with "0x" (e.g., 0x61)
+                    intValue = Convert.ToInt32(hexString, 16);
+                else
+                    intValue = int.Parse(hexString, System.Globalization.NumberStyles.HexNumber);
+            }
+            catch (Exception ex) // Handle exceptions encountered in above code
+            {
+                string message = "Error converting hex string '" + hexString + "' to integer"; // Store error message
+                VoiceAttackPlugin.LogError(ex, message); // Output info to event log and write error info to file
+                intValue = -1;
+            }
             return intValue;
         }
 
