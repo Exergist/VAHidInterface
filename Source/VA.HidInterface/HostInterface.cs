@@ -80,14 +80,14 @@ namespace VA.HidInterface
             // Convert passed-in hexadecimal strings (for target HidDevice) to integers
             _vendorID = ConvertHexStringToInt(vendorID);
             _productID = ConvertHexStringToInt(productID);
-            if (usagePage != null)
+            if (usagePage != "")
                 _usagePage = ConvertHexStringToInt(usagePage);
             else
-                _usagePage = -1;
-            if (usage != null)
+                _usagePage = -123456;
+            if (usage != "")
                 _usage = ConvertHexStringToInt(usage);
             else
-                _usage = -1;
+                _usage = -123456;
 
             // Transfer passed-in target HidDevice name
             this.DeviceName = deviceName;
@@ -104,7 +104,7 @@ namespace VA.HidInterface
 
             try // Attempt the following code...
             {
-                if (_usagePage == -1 || _usage == -1) // Check if usagePage OR usage were not provided when HostInterface was instantiated
+                if (_usagePage == -123456 || _usage == -123456) // Check if usagePage OR usage were not provided when HostInterface was instantiated
                     kbDevice = HidDevices.Enumerate(_vendorID, _productID).FirstOrDefault(); // Find first HidDevice that matches _vendorID and _productID
                 else
                 {
@@ -149,12 +149,12 @@ namespace VA.HidInterface
                     keyCol["DeviceName"] = this.DeviceName; // Store HID hardware device name
                     keyCol["VendorID"] = "0x" + String.Format("{0:X4}", _vendorID); // Store HID hardware Vendor ID
                     keyCol["ProductID"] = "0x" + String.Format("{0:X4}", _productID); // Store HID hardware Product ID
-                    keyCol["UsagePage"] = "0x" + String.Format("{0:X4}", _usagePage); // Store HID hardware Usage Page
-                    keyCol["Usage"] = "0x" + String.Format("{0:X4}", _usage); // Store HID hardware Usage
+                    if (_usagePage != -123456) // Check if Usage Page is NOT an "empty" value
+                        keyCol["UsagePage"] = "0x" + String.Format("{0:X4}", _usagePage); // Store HID hardware Usage Page
+                    if (_usage != -123456) // Check if Usage is NOT an "empty" value
+                        keyCol["Usage"] = "0x" + String.Format("{0:X4}", _usage); // Store HID hardware Usage
                     var parser = new FileIniDataParser(); // Create new FileIniDataParser instance
-                    ///string message = "Configuration for '" + this.DeviceName + "'" + (System.IO.File.Exists(hidConfigFilePath) == true ? " updated" : " saved"); // Construct event log message (debug)
                     parser.WriteFile(hidConfigFilePath, data); // Write stored data to ini file
-                    ///VoiceAttackPlugin.OutputToLog(message, "purple"); // Output info to event log (debug)
                 }
             }
             catch (Exception ex) // Handle exceptions encountered in above code
@@ -245,6 +245,8 @@ namespace VA.HidInterface
                     VoiceAttackPlugin.OutputToLog("Could not read data from " + this.DeviceName, "red"); // Output info to event log
                 else
                 {
+                    ///VoiceAttackPlugin.OutputToLog("Data received from " + this.DeviceName, "purple"); // Output info to event log (debug)
+                    
                     // *Do stuff with data received from HidDevice*
 
                     // Here is an example for debugging
@@ -316,6 +318,7 @@ namespace VA.HidInterface
         {
             try // Attempt the following code...
             {
+                ///VoiceAttackPlugin.OutputToLog("Data received from " + this.DeviceName, "purple"); // Output info to event log (debug)
                 if (this.IsConnected == false || this.IsListening == false) // Check if HostInterface (computer) is NOT connected to HidDevice OR is NOT listening for HidDevice messages 
                     return; // Return from this method
 
@@ -359,7 +362,7 @@ namespace VA.HidInterface
             {
                 string message = "Error converting hex string '" + hexString + "' to integer"; // Store error message
                 VoiceAttackPlugin.LogError(ex, message); // Output info to event log and write error info to file
-                intValue = -1;
+                intValue = -123456;
             }
             return intValue;
         }

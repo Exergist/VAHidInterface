@@ -5,9 +5,9 @@
 
 
 // TODO
-// disposition ///, /*, debug, etc.
+// disposition ///, etc.
 // change required version to 1.8.8 when ready
-// go through "blue" yellow red purple text colors
+// go through red text colors
 // compare and update Ex.HidInterface Code vs the HostInterface code here
 
 using IniParser;
@@ -75,8 +75,7 @@ namespace VA.HidInterface
 
                 try // Attempt the following code...
                 {
-                    
-                    if (System.IO.File.Exists(hidConfigFilePath) == true)
+                    if (File.Exists(hidConfigFilePath) == true)
                     {
                         var parser = new FileIniDataParser();
                         IniData data = parser.ReadFile(hidConfigFilePath);
@@ -159,7 +158,7 @@ namespace VA.HidInterface
                             string deviceName = context[1];
                             string vendorID = context[2];
                             string productID = context[3];
-                            if (deviceName == "Not set" || vendorID == "Not set" || productID == "Not set") // Check if any required input was not provided
+                            if (deviceName == "" || vendorID == "" || productID == "") // Check if any required input was not provided
                             {
                                 OutputToLog("Could not process VAHidInterface '" + hidInterfaceAction.ToString().ToLower() + "' action. Not all required input was provided.", "red");
                                 return;
