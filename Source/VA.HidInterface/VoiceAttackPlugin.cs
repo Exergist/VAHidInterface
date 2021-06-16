@@ -1,5 +1,5 @@
 ﻿// VAHidInterface v0.1.0
-// Plugin providing two-way communication between VoiceAttack and connected HID hardware
+// Plugin providing two-way communication between VoiceAttack and connected HID hardware (one device)
 // Compatible with 32-bit and 64-bit VoiceAttack version 1.8.8 or later
 // Uses VoiceAttack plugin interface version 4
 
@@ -9,6 +9,7 @@
 // change required version to 1.8.8 when ready
 // go through red text colors
 // compare and update Ex.HidInterface Code vs the HostInterface code here
+// put in QMK code to confirm proper execution of a HIDAction (then remove VA code at end of 'send' command)
 
 using IniParser;
 using IniParser.Model;
