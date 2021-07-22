@@ -324,8 +324,8 @@ namespace VA.HidInterface
 
                 // *Do stuff with data received from HidDevice*
 
-                // Here is an example for debugging
-                /* if (report.Data.Length >= 4) // Check if length of received data is greater than or equal to 4 elements (change as needed)
+                /* // Here is an example for debugging
+                if (report.Data.Length >= 4) // Check if length of received data is greater than or equal to 4 elements (change as needed)
                 {
                     int[] data = Array.ConvertAll(report.Data, c => (int)c); // Convert received byte data to integer array
                     string[] convertedData = new string[data.Length]; // Initialize string array
